@@ -1,6 +1,8 @@
 import hashlib
 import itertools
 import time
+import json
+import os
 
 
 def substitute_characters(word):
@@ -51,7 +53,6 @@ def find_original_value(hash_value, dictionary_path="./10k-most-common.txt"):
             # Create a list of possible substitutions for each character in the word
             possible_combinations = substitute_characters(word)
             for combination in possible_combinations:
-                print(f"Checking {combination}...")
                 # Hash the combination and compare it to the target hash
                 cracker_hash = hashlib.sha1(combination.encode()).hexdigest()
                 if cracker_hash == hash_value:
@@ -64,5 +65,41 @@ def find_original_value(hash_value, dictionary_path="./10k-most-common.txt"):
     print(f"Password not found. Time taken: {end_time - start_time} seconds")
 
 
+def create_rainbow_table(dictionary_path):
+    """Create a rainbow table of hashes and their original values"""
+    start_time = time.time()
+    rainbow_table = {}
+    count = 0
+    with open(dictionary_path, "r") as dictionary:
+        for line in dictionary:
+            word = line.strip()
+            possible_combinations = substitute_characters(word)
+            for combination in possible_combinations:
+                count += 1
+                hash_value = hashlib.sha1(combination.encode()).hexdigest()
+                rainbow_table[hash_value] = combination
+
+    end_time = time.time()
+    print(f"Time taken to create rainbow table: {end_time - start_time} seconds")
+    print(f"Number of entries in rainbow table: {count}")
+
+    # Saving the rainbow table to a file
+    with open("rainbow_table.json", "w") as file:
+        json.dump(rainbow_table, file)
+
+    # Measuring the size of the file
+    file_size = os.path.getsize("rainbow_table.json")
+    print(f"Size of rainbow table file: {file_size} bytes")
+
+    return rainbow_table
+
+
 target_hash = "d54cc1fe76f5186380a0939d2fc1723c44e8a5f7"
 find_original_value(target_hash)
+# create_rainbow_table("./10k-most-common.txt")
+
+# try to hash the word "password" and calculate the time taken
+# start_time = time.time()
+# hashlib.sha1("password".encode()).hexdigest()
+# end_time = time.time()
+# print(f"Time taken to hash a word: {end_time - start_time} seconds")
